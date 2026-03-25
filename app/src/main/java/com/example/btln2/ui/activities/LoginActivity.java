@@ -19,7 +19,6 @@ import com.example.btln2.utils.PreferenceManager;
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etUsername, etPassword;
-    private Button btnLogin;
     private TextView tvError;
     private PreferenceManager preferenceManager;
     private AppDatabase db;
@@ -32,14 +31,13 @@ public class LoginActivity extends AppCompatActivity {
         db = AppDatabase.getDatabase(this);
         preferenceManager = new PreferenceManager(this);
 
-        // If already logged in, go to MainActivity
         if (preferenceManager.isLoggedIn()) {
             startMainActivity();
         }
 
         etUsername = findViewById(R.id.etUsername);
         etPassword = findViewById(R.id.etPassword);
-        btnLogin = findViewById(R.id.btnLogin);
+        Button btnLogin = findViewById(R.id.btnLogin);
         tvError = findViewById(R.id.tvError);
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
@@ -55,17 +53,17 @@ public class LoginActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError("Vui lòng nhập đầy đủ thông tin");
+            showError(getString(R.string.login_fill_info));
             return;
         }
 
         User user = db.userDao().login(username, password);
         if (user != null) {
             preferenceManager.setLogin(user.userId);
-            Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.login_success), Toast.LENGTH_SHORT).show();
             startMainActivity();
         } else {
-            showError("Tên đăng nhập hoặc mật khẩu không đúng");
+            showError(getString(R.string.login_failed));
         }
     }
 
