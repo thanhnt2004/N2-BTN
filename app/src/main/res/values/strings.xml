@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">BTL N2</string>
+    <string name="add_to_cart">Thêm vào hóa đơn</string>
+    <string name="continue_shopping">Tiếp tục mua sắm</string>
+    <string name="login_to_purchase">Vui lòng đăng nhập để mua hàng!</string>
+    <string name="added_to_cart">Đã thêm vào hóa đơn!</string>
+    <string name="product_name_hint">Product Name</string>
+    <string name="product_price_hint">$100.00</string>
+    <string name="product_desc_hint">This is a long description of the product.</string>
+
+    <!-- Login Strings -->
+    <string name="login_success">Đăng nhập thành công!</string>
+    <string name="login_fill_info">Vui lòng nhập đầy đủ thông tin</string>
+    <string name="login_failed">Tên đăng nhập hoặc mật khẩu không đúng</string>
 </resources>
