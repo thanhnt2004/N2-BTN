@@ -1,5 +1,6 @@
 package com.example.btln2.ui.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -23,8 +24,9 @@ import java.util.Locale;
 
 public class ProductDetailActivity extends AppCompatActivity {
 
+    private ImageView ivProductImage;
     private TextView tvProductName, tvProductPrice, tvProductDescription;
-    private Button btnAddToCart;
+    private Button btnAddToCart, btnBack;
 
     private AppDatabase db;
     private PreferenceManager preferenceManager;
@@ -54,7 +56,8 @@ public class ProductDetailActivity extends AppCompatActivity {
                 handleAddToCart();
             }
         });
-        findViewById(R.id.btnBack).setOnClickListener(new View.OnClickListener() {
+        
+        btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
@@ -63,50 +66,70 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        ivProductImage = findViewById(R.id.ivProductImage);
         tvProductName = findViewById(R.id.tvProductName);
         tvProductPrice = findViewById(R.id.tvProductPrice);
         tvProductDescription = findViewById(R.id.tvProductDescription);
         btnAddToCart = findViewById(R.id.btnAddToCart);
+        btnBack = findViewById(R.id.btnBack);
     }
 
     private void loadProductData() {
-        product = db.productDao().getProductById(productId);
-        if (product != null) {
-            tvProductName.setText(product.productName);
-            tvProductPrice.setText(String.format(Locale.getDefault(), "$%.2f", product.price));
-            tvProductDescription.setText(product.description);
-        }
+        new Thread(() -> {
+            product = db.productDao().getProductById(productId);
+            if (product != null) {
+                runOnUiThread(() -> {
+                    tvProductName.setText(product.productName);
+                    tvProductPrice.setText(String.format(Locale.getDefault(), "$%.2f", product.price));
+                    tvProductDescription.setText(product.description);
+                    
+                    // Hiển thị ảnh
+                    String imageName = product.image;
+                    if (imageName != null && imageName.contains(".")) {
+                        imageName = imageName.substring(0, imageName.lastIndexOf("."));
+                    }
+                    int resId = getResources().getIdentifier(imageName, "drawable", getPackageName());
+                    if (resId != 0) {
+                        ivProductImage.setImageResource(resId);
+                    } else {
+                        ivProductImage.setImageResource(android.R.drawable.ic_menu_report_image);
+                    }
+                });
+            }
+        }).start();
     }
 
     private void handleAddToCart() {
         if (!preferenceManager.isLoggedIn()) {
-            Toast.makeText(this, getString(R.string.login_to_purchase), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Vui lòng đăng nhập để mua hàng", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             return;
         }
 
-        int userId = preferenceManager.getUserId();
-        Order pendingOrder = db.orderDao().getPendingOrderByUser(userId);
-        int orderId;
+        new Thread(() -> {
+            int userId = preferenceManager.getUserId();
+            Order pendingOrder = db.orderDao().getPendingOrderByUser(userId);
+            long orderId;
 
-        if (pendingOrder == null) {
-            String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-            Order newOrder = new Order(userId, currentDate, "Pending");
-            orderId = (int) db.orderDao().insert(newOrder);
-        } else {
-            orderId = pendingOrder.orderId;
-        }
-
-        if (product != null) {
-            OrderDetail existingDetail = db.orderDetailDao().getOrderDetail(orderId, productId);
-            if (existingDetail != null) {
-                existingDetail.quantity += 1;
-                db.orderDetailDao().update(existingDetail);
+            if (pendingOrder == null) {
+                String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                Order newOrder = new Order(userId, currentDate, "Pending");
+                orderId = db.orderDao().insert(newOrder);
             } else {
-                OrderDetail newDetail = new OrderDetail(orderId, productId, 1, product.price);
-                db.orderDetailDao().insert(newDetail);
+                orderId = pendingOrder.orderId;
             }
-            Toast.makeText(this, getString(R.string.added_to_cart), Toast.LENGTH_SHORT).show();
-        }
+
+            if (product != null) {
+                OrderDetail existingDetail = db.orderDetailDao().getOrderDetail((int)orderId, productId);
+                if (existingDetail != null) {
+                    existingDetail.quantity += 1;
+                    db.orderDetailDao().update(existingDetail);
+                } else {
+                    OrderDetail newDetail = new OrderDetail((int)orderId, productId, 1, product.price);
+                    db.orderDetailDao().insert(newDetail);
+                }
+                runOnUiThread(() -> Toast.makeText(ProductDetailActivity.this, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
     }
 }

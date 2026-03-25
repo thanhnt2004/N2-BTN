@@ -17,6 +17,7 @@ import com.example.btln2.data.local.database.AppDatabase;
 import com.example.btln2.data.local.entities.Category;
 import com.example.btln2.data.local.entities.Product;
 import com.example.btln2.ui.activities.LoginActivity;
+import com.example.btln2.ui.activities.ProductDetailActivity;
 import com.example.btln2.ui.adapters.CategoryAdapter;
 import com.example.btln2.ui.adapters.ProductAdapter;
 import com.example.btln2.utils.PreferenceManager;
@@ -99,7 +100,16 @@ public class MainActivity extends AppCompatActivity {
     private void setupProducts(List<Product> products) {
         allProducts = products;
         productAdapter = new ProductAdapter(allProducts, product -> {
-            Toast.makeText(MainActivity.this, "Sản phẩm: " + product.productName, Toast.LENGTH_SHORT).show();
+            // Kiểm tra đăng nhập trước khi xem chi tiết
+            if (!preferenceManager.isLoggedIn()) {
+                Toast.makeText(MainActivity.this, "Vui lòng đăng nhập để xem chi tiết sản phẩm", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(MainActivity.this, ProductDetailActivity.class);
+                intent.putExtra("PRODUCT_ID", product.productId);
+                startActivity(intent);
+            }
         });
         rvProducts.setAdapter(productAdapter);
     }

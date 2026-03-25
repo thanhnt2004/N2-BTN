@@ -1,5 +1,6 @@
 package com.example.btln2.ui.adapters;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,9 +42,25 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     @Override
     public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
         Product product = products.get(position);
+        Context context = holder.itemView.getContext();
+        
         holder.tvProductName.setText(product.productName);
         holder.tvProductPrice.setText(String.format(Locale.US, "$%.2f", product.price));
-        holder.ivProduct.setImageResource(android.R.drawable.ic_menu_report_image);
+        
+        // Lấy Resource ID từ tên file ảnh (bỏ đuôi mở rộng nếu có)
+        String imageName = product.image;
+        if (imageName != null && imageName.contains(".")) {
+            imageName = imageName.substring(0, imageName.lastIndexOf("."));
+        }
+        
+        int resId = context.getResources().getIdentifier(imageName, "drawable", context.getPackageName());
+        
+        if (resId != 0) {
+            holder.ivProduct.setImageResource(resId);
+        } else {
+            // Ảnh mặc định nếu không tìm thấy
+            holder.ivProduct.setImageResource(android.R.drawable.ic_menu_report_image);
+        }
 
         holder.itemView.setOnClickListener(v -> listener.onProductClick(product));
     }
